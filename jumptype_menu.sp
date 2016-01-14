@@ -55,7 +55,7 @@ public Action:DOMenu(client,args)
 	SetMenuTitle(menu, "Choose jump type");
 	
 	if(salto[client] == 0) AddMenuItem(menu, "longjump", "Enable Long Jump");
-	else AddMenuItem(menu, "bhop", "Enable Easy Bhop");
+	else AddMenuItem(menu, "bhop", "Enable Easy Hop");
 	SetMenuExitButton(menu, true);
 	DisplayMenu(menu, client, MENU_TIME_FOREVER);
 }
