@@ -2,7 +2,7 @@
 #include <sourcemod>
 #include <sdktools>
 
-#define DATA "1.0"
+#define DATA "1.1"
 
 #define HEIGHT 1.1
 #define LENGTH 1.75
@@ -10,6 +10,9 @@
 new salto[MAXPLAYERS+1];
 
 new g_iToolsVelocity;
+
+Handle cvar_jumptype;
+int g_jumptype;
 
 public Plugin:myinfo = 
 {
@@ -26,7 +29,28 @@ public OnPluginStart()
 	RegConsoleCmd("sm_bhop", DOMenu);
 	HookEvent("player_jump", Event_OnPlayerJump);
 	
+	cvar_jumptype = CreateConVar("sm_jumptype_only", "2", "0 = only easy hop. 1 = only long jump. 2 = you can choose both");
+	g_jumptype = GetConVarInt(cvar_jumptype);
+	
+	HookConVarChange(cvar_jumptype, changed);
+	
 	g_iToolsVelocity = FindSendPropInfo("CBasePlayer", "m_vecVelocity[0]");
+	
+	for(int i = 1; i <= MaxClients; i++)
+		if(IsClientInGame(i))
+		{
+			OnClientPutInServer(i);
+		}
+}
+
+public changed(Handle:cvar, const String:oldvalue[], const String:newvalue[])
+{
+	g_jumptype = GetConVarInt(cvar_jumptype);
+	for(int i = 1; i <= MaxClients; i++)
+		if(IsClientInGame(i))
+		{
+			OnClientPutInServer(i);
+		}
 }
 
 public void OnConfigsExecuted()
@@ -37,10 +61,10 @@ public void OnConfigsExecuted()
 void BhopOn()
 {
 	SetCvar("sv_enablebunnyhopping", "1"); 
-	//SetCvar("sv_staminamax", "0");
+	SetCvar("sv_staminamax", "0");
 	SetCvar("sv_airaccelerate", "3000");
-	//SetCvar("sv_staminajumpcost", "0");
-	//SetCvar("sv_staminalandcost", "0");
+	SetCvar("sv_staminajumpcost", "0");
+	SetCvar("sv_staminalandcost", "0");
 }
 
 stock void SetCvar(char[] scvar, char[] svalue)
@@ -51,6 +75,8 @@ stock void SetCvar(char[] scvar, char[] svalue)
 
 public Action:DOMenu(client,args)
 {
+	if (g_jumptype != 2)return Plugin_Continue;
+	
 	new Handle:menu = CreateMenu(DIDMenuHandler);
 	SetMenuTitle(menu, "Choose jump type");
 	
@@ -58,6 +84,8 @@ public Action:DOMenu(client,args)
 	else AddMenuItem(menu, "bhop", "Enable Easy Hop");
 	SetMenuExitButton(menu, true);
 	DisplayMenu(menu, client, MENU_TIME_FOREVER);
+	
+	return Plugin_Handled;
 }
 
 public DIDMenuHandler(Handle:menu, MenuAction:action, client, itemNum) 
@@ -86,9 +114,11 @@ public DIDMenuHandler(Handle:menu, MenuAction:action, client, itemNum)
 	}
 }
 
-public OnClientPostAdminCheck(client)
+public OnClientPutInServer(client)
 {
-	salto[client] = 1;
+	if (g_jumptype == 2)
+		salto[client] = 1;
+	else salto[client] = g_jumptype;
 }
 
 public Action:Event_OnPlayerJump(Handle:event, const String:name[], bool:dontBroadcast) 
