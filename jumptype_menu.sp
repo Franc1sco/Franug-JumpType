@@ -70,7 +70,7 @@ void BhopOn()
 stock void SetCvar(char[] scvar, char[] svalue)
 {
 	Handle cvar = FindConVar(scvar);
-	SetConVarString(cvar, svalue, true);
+	if(cvar != INVALID_HANDLE) SetConVarString(cvar, svalue, true);
 }
 
 public Action:DOMenu(client,args)
